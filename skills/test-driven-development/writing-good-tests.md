@@ -1,7 +1,8 @@
 # Writing Good Tests
 
-**Load this reference when:** writing or changing tests, adding mocks, or
-adding cleanup/helper methods for tests.
+**Load this reference when:** writing or changing tests, adding mocks,
+adding cleanup/helper methods for tests, or triaging the tests you added
+before calling work complete.
 
 ## Overview
 
@@ -147,17 +148,49 @@ BEFORE adding a mock or test helper:
     Unmock it or delete the assertion.
 ```
 
-## Tests Ship With the Implementation
+## Scaffolding Tests
+
+A test you write to confirm your own edit landed is scaffolding, not a
+regression test. It is useful for the minute it takes to prove the wiring
+is reachable, and a maintenance cost every day after. Mark it the moment
+you write it:
+
+```typescript
+// SCAFFOLD: delete before completion — proves the retry path is reachable
+test('retryOperation resolves', async () => { ... });
+```
+
+You know it is throwaway now. You will not reliably know later, when it
+sits in the file looking like every other test in the suite.
+
+## Triage Before Completion
 
 The TDD cycle — failing test, minimal implementation, refactor — is what
-"complete" means. Ship the tests the behavior needs and only those:
-trivial code and human prose earn none, and a test written to satisfy
-process costs maintenance forever.
+"complete" means. Complete also means the suite you leave behind is the
+one the behavior needs and nothing more: trivial code and human prose
+earn no tests, and a test written to satisfy process costs maintenance
+forever.
 
-## The Mutation Check
+For each test you added in this unit of work, name the production change
+that would make it fail.
 
-Before finishing, mentally mutate the production code; at least one test
-should fail for each realistic mutation:
+```
+Can name one  → keep it
+Cannot        → delete it
+
+Stating why it cannot fail for a real bug is the same burden as
+writing it was. "It felt redundant" is not an answer.
+
+Carve-out: pinning a wire format, public schema, or stored data
+shape counts as naming a break — those break consumers you do not
+control. Pin it deliberately and say so in the test name.
+
+Out of scope: tests you did not write in this unit of work.
+Do not touch them.
+```
+
+To find the tests that cannot name one, mentally mutate the production
+code; at least one test should fail for each realistic mutation:
 
 - Wrong constant or argument
 - Wrong branch handler
@@ -166,7 +199,14 @@ should fail for each realistic mutation:
 - Missing validation for zero, empty, nil, unauthorized, or malformed input
 
 A mutation nothing catches marks the behavior as unprotected — or the
-test as tautological.
+test as tautological. Deleting a tautological test can leave a real
+behavior uncovered; that is the TDD cycle again, not a reason to keep the
+test that was not protecting it.
+
+Before claiming completion:
+
+- `rg 'SCAFFOLD:'` returns nothing
+- The suite is green
 
 ## Quick Reference
 
@@ -181,7 +221,9 @@ test as tautological.
 | Build a mock response | Mirror the real structure completely |
 | Need cleanup only tests use | Put it in test utilities |
 | Watch mock setup balloon | Switch to an integration test with real components |
+| Write a test to check your own edit | Mark it `SCAFFOLD:` and delete it before completion |
 | Finish a test file | Run the mutation check |
+| Finish a unit of work | Triage every test you added: name its break or delete it |
 
 ## Warning Signs
 
@@ -196,3 +238,5 @@ test as tautological.
 - A method is called only from test files
 - Mock setup is more than half the test, or you can't explain why the mock is needed
 - Mocking "just to be safe"
+- A `SCAFFOLD:` marker survives into the work you call complete
+- You cannot say what would have to break for a test you just wrote to fail

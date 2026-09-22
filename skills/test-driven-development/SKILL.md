@@ -208,6 +208,8 @@ When writing or changing any test, read [writing-good-tests.md](writing-good-tes
 - Assert on real behavior, never on mock behavior
 - Keep test-only code in test utilities, out of production classes
 - Understand a dependency's side effects before mocking it
+- Mark a test written only to check your own edit `SCAFFOLD:`, and delete it before completion
+- Triage every test you added before calling the work done: name its break or delete it
 
 ## Common Rationalizations
 
@@ -292,6 +294,8 @@ Before marking work complete:
 - [ ] Output pristine (no errors, warnings)
 - [ ] Tests use real code (mocks only if unavoidable)
 - [ ] Edge cases and errors covered
+- [ ] Every test I added names the production change that would make it fail
+- [ ] No `SCAFFOLD:` markers remain (`rg 'SCAFFOLD:'` is empty)
 
 Can't check all boxes? You skipped TDD. Start over.
 

@@ -7,7 +7,7 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 ## Overview
 
-**Core principle:** Verify tests → Detect environment → Present options → Execute choice → Clean up.
+**Core principle:** Verify tests → Triage tests → Detect environment → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -23,7 +23,29 @@ Tests failing (<N> failures). Must fix before completing:
 [Show failures]
 ```
 
-**If tests pass:** continue to Step 2.
+**If tests pass:** continue to Step 1.5.
+
+## Step 1.5: Triage The Tests You Added
+
+A green suite is not the same as a suite worth keeping. Before the work
+merges, review every test this work added — the branch diff scopes it —
+and for each one name the production change that would make it fail.
+
+```
+Can name one  → keep it
+Cannot        → delete it
+```
+
+Also confirm `rg 'SCAFFOLD:'` returns nothing: tests written only to
+prove an edit landed do not merge.
+
+Tests that already existed before this work are out of scope. Do not
+touch them.
+
+See superpowers:test-driven-development's
+[writing-good-tests.md](../test-driven-development/writing-good-tests.md)
+for the full gate and its carve-outs. If deletions changed the suite,
+re-run it and confirm green before continuing to Step 2.
 
 ## Step 2: Detect Environment
 
