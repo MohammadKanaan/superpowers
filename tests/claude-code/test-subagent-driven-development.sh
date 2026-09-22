@@ -36,14 +36,20 @@ fi
 
 echo ""
 
-# Test 2: Verify skill describes correct workflow order
-echo "Test 2: Workflow ordering..."
+# Test 2: Verify dispatch shape
+echo "Test 2: Dispatch shape..."
 
-output=$(run_claude "In the subagent-driven-development skill, what comes first: spec compliance review or code quality review? Answer using exactly this structure:
-First: <review type>
-Second: <review type>" "$CLAUDE_PROMPT_TIMEOUT")
+output=$(run_claude "In the subagent-driven-development skill, a plan has 6 tasks across one phase. How many implementer subagents execute it? Answer using exactly this structure:
+Implementer subagents: <number>
+Split into batches: <yes or no>" "$CLAUDE_PROMPT_TIMEOUT")
 
-if assert_order "$output" "First:.*spec.*compliance" "Second:.*code.*quality" "Spec compliance before code quality"; then
+if assert_contains "$output" "Implementer subagents:.*\(1\|one\)" "One implementer for the plan"; then
+    : # pass
+else
+    exit 1
+fi
+
+if assert_contains "$output" "Split into batches:.*no" "No batching below the threshold"; then
     : # pass
 else
     exit 1
@@ -83,7 +89,7 @@ else
     exit 1
 fi
 
-if assert_contains "$output" "Step 1\|beginning\|start\|Load Plan" "Read at beginning"; then
+if assert_contains "$output" "Step 1\|beginning\|start\|Setup\|Load Plan" "Read at beginning"; then
     : # pass
 else
     exit 1
@@ -91,12 +97,12 @@ fi
 
 echo ""
 
-# Test 5: Verify spec compliance reviewer is skeptical
-echo "Test 5: Spec compliance reviewer mindset..."
+# Test 5: Verify the adversarial reviewer is skeptical
+echo "Test 5: Adversarial reviewer mindset..."
 
-output=$(run_claude "What is the spec compliance reviewer's attitude toward the implementer's report in subagent-driven-development?" "$CLAUDE_PROMPT_TIMEOUT")
+output=$(run_claude "In subagent-driven-development, what is the final adversarial reviewer's attitude toward the implementer's report?" "$CLAUDE_PROMPT_TIMEOUT")
 
-if assert_contains "$output" "not.*trust\|don't trust\|skeptical\|verify.*independently\|suspiciously" "Reviewer is skeptical"; then
+if assert_contains "$output" "not.*trust\|don't trust\|skeptical\|adversarial\|verify.*independently\|suspiciously\|unverified" "Reviewer is skeptical"; then
     : # pass
 else
     exit 1
@@ -110,10 +116,10 @@ fi
 
 echo ""
 
-# Test 6: Verify review loops
-echo "Test 6: Review loop requirements..."
+# Test 6: Verify the fix loop
+echo "Test 6: Fix loop requirements..."
 
-output=$(run_claude "In subagent-driven-development, what happens if a reviewer finds issues? Is it a one-time review or a loop?" "$CLAUDE_PROMPT_TIMEOUT")
+output=$(run_claude "In subagent-driven-development, what happens if the controller's plan check finds a gap? Is it a one-time fix or a loop?" "$CLAUDE_PROMPT_TIMEOUT")
 
 if assert_contains "$output" "loop\|again\|repeat\|until.*approved\|until.*compliant" "Review loops mentioned"; then
     : # pass
@@ -129,20 +135,20 @@ fi
 
 echo ""
 
-# Test 7: Verify full task text is provided
-echo "Test 7: Task context provision..."
+# Test 7: Verify requirements are handed over as a file
+echo "Test 7: Requirements provision..."
 
-output=$(run_claude "In subagent-driven-development, how does the controller provide task information to the implementer subagent? Answer using exactly this structure:
-Controller provides: <directly or by file>
-Implementer must read plan file: <yes or no>" "$CLAUDE_PROMPT_TIMEOUT")
+output=$(run_claude "In subagent-driven-development, how does the controller give requirements to the implementer subagent on a whole-plan dispatch? Answer using exactly this structure:
+Controller provides: <a file path or pasted text>
+Implementer reads the plan file: <yes or no>" "$CLAUDE_PROMPT_TIMEOUT")
 
-if assert_contains "$output" "provide.*directly\|full.*text\|paste\|include.*prompt" "Provides text directly"; then
+if assert_contains "$output" "Controller provides:.*\(file\|path\)" "Hands over a file path"; then
     : # pass
 else
     exit 1
 fi
 
-if assert_contains "$output" "Implementer must read plan file:.*no" "Doesn't make subagent read file"; then
+if assert_contains "$output" "Implementer reads the plan file:.*yes" "Whole-plan implementer reads the plan"; then
     : # pass
 else
     exit 1

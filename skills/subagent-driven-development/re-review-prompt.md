@@ -1,25 +1,26 @@
 # Scoped Re-Review Prompt Template
 
-Use this template when dispatching a re-review after a fix round. The
-re-reviewer verifies the findings were addressed and checks the fix diff for
-new breakage. It is not a fresh review — the full review already happened.
+Use this template when dispatching the re-review of the fix wave that follows
+the final adversarial review. The re-reviewer verifies the findings were
+addressed and checks the fix diff for new breakage. It is not a fresh review
+— the adversarial review already happened.
 
-**Purpose:** Verify each finding from the previous review was addressed, and
-that the fix itself broke nothing.
+**Purpose:** Verify each finding from the adversarial review was addressed,
+and that the fix itself broke nothing.
 
 ```
 Subagent (general-purpose):
-  description: "Re-review Task N fix round R"
+  description: "Re-review the final fix wave"
   model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
          model silently inherits the session's most expensive one]
   prompt: |
-    You are re-reviewing one task's fix round. A previous review produced
-    findings; an implementer has attempted to fix them. Your job is to
-    verdict each finding and inspect the fix diff — nothing else.
+    You are re-reviewing a fix wave. An adversarial review of this branch
+    produced findings; an implementer has attempted to fix them. Your job is
+    to verdict each finding and inspect the fix diff — nothing else.
 
-    ## The Task
+    ## What the Branch Was Supposed to Do
 
-    Read the task brief: [BRIEF_FILE]
+    Plan: [PLAN_FILE]
 
     ## The Findings Under Verification
 
@@ -58,8 +59,8 @@ Subagent (general-purpose):
     Inspect the fix diff for new problems the fix itself introduced. Do NOT
     re-review code the fix did not touch: if you notice an issue entirely
     outside the fix diff, report it under Out-of-Scope Observations — it
-    does not block this task and does not extend the loop. A broad
-    whole-branch review happens after all tasks are complete.
+    does not extend the loop. The whole-branch review already happened;
+    this is its verification pass, and there is no second fix wave.
 
     ## Tests
 
@@ -92,20 +93,21 @@ Subagent (general-purpose):
     ### Out-of-Scope Observations
 
     Issues you noticed entirely outside the fix diff. Non-blocking; the
-    controller ledgers these for the final review. "None" if none.
+    controller ledgers these and they surface to the human when the branch
+    is finished. "None" if none.
 
     ### Verdict
 
-    **Fix round:** [All findings addressed, no new Critical/Important
+    **Fix wave:** [All findings addressed, no new Critical/Important
     breakage | Findings remain open] — list the open ones.
 ```
 
 **Placeholders:**
 - `[MODEL]` — REQUIRED: reviewer model per SKILL.md Model Selection; scoped
   re-reviews of small fix diffs take a cheap-to-mid tier
-- `[BRIEF_FILE]` — the task brief file (same file the implementer worked from)
+- `[PLAN_FILE]` — the plan the branch implements
 - `[FINDINGS]` — the Critical/Important findings and spec gaps from the
-  previous review, copied verbatim, one per bullet
+  adversarial review, copied verbatim, one per bullet
 - `[REPORT_FILE]` — the implementer's report file (fix reports appended)
 - `[FIX_BASE_SHA]` — the head the previous review saw
 - `[HEAD_SHA]` — current commit

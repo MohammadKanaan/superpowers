@@ -42,6 +42,14 @@ main() {
 ## Task 1: First thing
 
 Do the first thing.
+
+## Task 2: Second thing
+
+Do the second thing.
+
+## Task 3: Third thing
+
+Do the third thing.
 PLAN
     cat > "$repo/plan-b.md" <<'PLAN'
 # Plan B
@@ -127,6 +135,44 @@ PLAN
     else
         fail "task-brief writes its brief under the plan's workspace"
         echo "    got: $brief_path"
+    fi
+
+    # --- task-brief accepts a task range for batch dispatch ---
+    local batch_out batch_path
+    batch_out="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 2-3)"
+    batch_path="$(printf '%s\n' "$batch_out" | sed -n 's/^wrote \(.*\): [0-9][0-9]* lines$/\1/p')"
+    if [[ "$batch_path" == "$repo/.superpowers/sdd/plan-a/batch-2-3-brief.md" ]]; then
+        pass "task-brief names a range brief batch-LO-HI-brief.md"
+    else
+        fail "task-brief names a range brief batch-LO-HI-brief.md"
+        echo "    got: $batch_path"
+    fi
+
+    if grep -q "Task 2: Second thing" "$batch_path" \
+        && grep -q "Task 3: Third thing" "$batch_path" \
+        && ! grep -q "Task 1: First thing" "$batch_path"; then
+        pass "task-brief range holds exactly the tasks in the range"
+    else
+        fail "task-brief range holds exactly the tasks in the range"
+        echo "    got: $(cat "$batch_path")"
+    fi
+
+    rc=0
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 2-4 >/dev/null 2>&1) || rc=$?
+    if [[ "$rc" -eq 3 ]]; then
+        pass "task-brief range with a missing task errors with exit 3"
+    else
+        fail "task-brief range with a missing task errors with exit 3"
+        echo "    got exit: $rc"
+    fi
+
+    rc=0
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 3-2 >/dev/null 2>&1) || rc=$?
+    if [[ "$rc" -eq 2 ]]; then
+        pass "task-brief inverted range errors with exit 2"
+    else
+        fail "task-brief inverted range errors with exit 2"
+        echo "    got exit: $rc"
     fi
 
     # --- review-package takes the plan first and lands in its directory ---
