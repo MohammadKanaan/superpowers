@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Stop hook: refuse to finish while scaffolding tests remain unresolved.
+#
+# A `SCAFFOLD:` marker means an agent wrote a test only to confirm its own
+# edit landed, and marked it for deletion. Leaving one behind means the
+# triage step was skipped. This hook makes that omission cost the agent a
+# real stop, instead of a grep it can forget to run.
+#
+# Scope is deliberately narrow: only test files changed in this working
+# tree, and only a marker at a comment position. Markdown is excluded and
+# string literals do not count, so a repo that documents or tests the marker
+# (this one included) does not flag itself.
+#
+# Exit 0 = nothing to resolve. Exit 2 = blocked; Claude Code feeds stderr
+# back to the model and refuses the stop.
+
+set -euo pipefail
+
+# Loop guard: when the harness re-invokes the hook after a block, the
+# payload carries stop_hook_active=true. Allow the stop then.
+input=""
+if [ ! -t 0 ]; then
+    input="$(cat 2>/dev/null || true)"
+fi
+if printf '%s' "$input" | grep -q '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then
+    exit 0
+fi
+
+command -v git >/dev/null 2>&1 || exit 0
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+
+# Files touched in this working tree: staged, unstaged, and untracked.
+changed="$(
+    {
+        git diff --name-only 2>/dev/null || true
+        git diff --cached --name-only 2>/dev/null || true
+        git ls-files --others --exclude-standard 2>/dev/null || true
+    } | sort -u
+)"
+
+[ -n "$changed" ] || exit 0
+
+markers=""
+while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    # Docs describe the marker; they are not tests that used it.
+    case "$file" in
+        *.md | *.mdx | *.txt) continue ;;
+    esac
+    case "$file" in
+        test/* | tests/* | */test/* | */tests/* | */__tests__/* | */spec/*) ;;
+        *.test.* | *.spec.* | *_test.* | *_spec.*) ;;
+        *) continue ;;
+    esac
+    [ -f "$file" ] || continue
+    # The marker counts only where a test would declare it: at a comment
+    # position. A bare substring match would flag files that write the
+    # literal into a string (fixtures, this hook's own tests).
+    if grep -Eq '^[[:space:]]*(//|/\*|\*|#|--)[[:space:]]*SCAFFOLD:' "$file" 2>/dev/null; then
+        markers="${markers}  - ${file}"$'\n'
+    fi
+done <<<"$changed"
+
+[ -n "$markers" ] || exit 0
+
+{
+    echo "Unresolved scaffolding tests remain (SCAFFOLD: markers found):"
+    printf '%s' "$markers"
+    echo
+    echo "Each marker means a test exists only to confirm your own edit landed."
+    echo "Delete the test and its marker. If a test catches a real production"
+    echo "break that is reachable without reverting your own edit, drop the"
+    echo "marker and keep it. Finish the triage, then stop."
+} >&2
+exit 2
