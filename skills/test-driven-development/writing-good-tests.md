@@ -41,9 +41,13 @@ expect(buildSearchQuery({ tag: 'urgent' })).toBe('tag:"urgent"');
 
 **No change detectors.** If only intentional decisions can fail a test —
 a constant's value, exact message wording, private structure — it fires
-on redesign and sleeps through bugs. Test the behavior that depends on
-the decision: not `expect(MAX_RETRIES).toBe(5)` but "a failing call is
-retried 5 times and the 6th attempt never happens."
+on redesign and sleeps through bugs. The mechanical test: it fails when
+a name, message, or constant changes while the behavior does not. Test
+the behavior that depends on the decision: not
+`expect(MAX_RETRIES).toBe(5)` but "a failing call is retried 5 times and
+the 6th attempt never happens." Pinning a message or shape is legitimate
+only when something outside this change consumes it (see the carve-out
+under Triage Before Completion).
 
 **Behavior, not text.** Asserting that a script, skill, or config
 contains an exact line proves only that the source is the source. Run
@@ -152,11 +156,23 @@ BEFORE adding a mock or test helper:
 
 A test you write to confirm your own edit landed is scaffolding, not a
 regression test. It is useful for the minute it takes to prove the wiring
-is reachable, and a maintenance cost every day after. Mark it the moment
-you write it:
+is reachable, and a maintenance cost every day after.
+
+**The test is mechanical: if the only production change that fails this
+test is reverting or inverting the lines you just added, it is
+scaffolding.** "It fails if I delete the line I wrote" describes your
+edit, not a break. Two shapes read like real tests and are not:
+
+- Threading a value through new wiring, then asserting it reached an
+  internal seam — a mock, a collaborator, a field no caller reads
+- Pinning output produced by the code you just changed, so it "cannot
+  change" — a test that passed the first time it ran never went RED, so
+  it proves nothing about the future
+
+Mark scaffolding the moment you write it:
 
 ```typescript
-// SCAFFOLD: delete before completion — proves the retry path is reachable
+// SCAFFOLD: delete before completion — proves delay reaches retryOperation
 test('retryOperation resolves', async () => { ... });
 ```
 
@@ -172,7 +188,8 @@ earn no tests, and a test written to satisfy process costs maintenance
 forever.
 
 For each test you added in this unit of work, name the production change
-that would make it fail.
+that would make it fail — a break reachable without reverting or
+inverting the edit you just made.
 
 ```
 Can name one  → keep it
@@ -180,10 +197,30 @@ Cannot        → delete it
 
 Stating why it cannot fail for a real bug is the same burden as
 writing it was. "It felt redundant" is not an answer.
+"Reverting my edit fails it" is not a break — it is the edit
+described in reverse.
 
-Carve-out: pinning a wire format, public schema, or stored data
-shape counts as naming a break — those break consumers you do not
-control. Pin it deliberately and say so in the test name.
+RED means the test failed against production code you had not yet
+changed, because the behavior was missing. A mutation you introduce
+afterwards is not a RED: it is evidence for the characterization
+carve-out below and nothing else, and it never qualifies a test of
+behavior your change touched.
+
+Characterization carve-out: a test that passed on its first run may
+be kept when it pins behavior your change does not touch — untested
+legacy, a module you are about to refactor. Prove it by mutating that
+code: change it, watch the test fail, revert the mutation, and confirm
+the source is byte-identical. The mutation must land outside your
+change's blast radius — a different function or file, not a line your
+edit wrapped, moved, or re-routed. If your change touched the behavior,
+a test of it is a guard for your edit: delete it.
+
+Boundary contract carve-out: this is for a contract your change
+alters — a published wire format, another service's schema, a stored
+file other tools read. Pin it and watch it go RED, because the old
+behavior was the old contract. A contract your change preserves never
+goes RED, so it is characterization, and the carve-out above decides
+it — not this one.
 
 Out of scope: tests you did not write in this unit of work.
 Do not touch them.
@@ -205,7 +242,9 @@ test that was not protecting it.
 
 Before claiming completion:
 
-- `rg 'SCAFFOLD:'` returns nothing
+- No `SCAFFOLD:` marker remains in a test file (`rg -n
+  '^[[:space:]]*(//|/\*|\*|#|--)[[:space:]]*SCAFFOLD:' -g '!*.md'` finds
+  nothing)
 - The suite is green
 
 ## Quick Reference

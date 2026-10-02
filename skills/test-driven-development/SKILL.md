@@ -225,13 +225,24 @@ When writing or changing any test, read [writing-good-tests.md](writing-good-tes
 | "Test hard = design unclear" | Listen to test. Hard to test = hard to use. |
 | "TDD will slow me down" | TDD IS the pragmatic path: catches bugs before commit, prevents regressions, lets you refactor without fear. "Pragmatic" shortcuts mean debugging in production — slower, not faster. |
 | "Manual test faster" | Manual doesn't prove edge cases. You'll re-test every change. |
-| "Existing code has no tests" | You're improving it. Add tests for existing code. |
+| "Existing code has no tests" | You're improving it. Add tests for existing code — and when it is code your change does not touch, prove each test with a mutation of that code. |
+| "I can name a break — it fails if I delete my line" | That is your edit described in reverse, not a break. A break must be reachable without reverting or inverting the lines you just added. |
+| "It's consumer-visible behavior" | Only if a consumer outside this change reads it. A value you just threaded through new wiring to an internal seam is plumbing, not behavior. |
+| "The wire-format carve-out lets me pin it" | That carve-out needs a consumer outside the change — another service, a published format, a stored file other tools read. A format only your edited code produces is your edit described in reverse. |
+| "It passed on the first run, so it's safe to keep" | A test that never failed proves nothing. It is scaffolding or a characterization test, and it does not belong to this change. |
+| "I watched it fail under a mutation I wrote" | Any mutation you introduce is not a RED. RED means it failed before your change existed. It is evidence for the characterization carve-out, and only outside your change's blast radius. |
+| "It's a boundary contract — shell scripts read the output" | That carve-out is for a contract your change alters, so it goes RED. A contract your change preserves never goes RED: it is characterization, and your change touched the behavior — delete it. |
 
 ## Red Flags - STOP and Start Over
 
 - Code before test
 - Test after implementation
 - Test passes immediately
+- A test whose break is "I removed the line I just added"
+- Keeping a test to stop behavior changing when you just changed it
+- Qualifying an immediately-green test with a mutation of my own edit
+- Calling a preserved contract a boundary contract to keep a first-run test
+- A wire-format carve-out for a format only your code reads
 - Can't explain why test failed
 - Tests added "later"
 - Rationalizing "just this once"
@@ -294,8 +305,8 @@ Before marking work complete:
 - [ ] Output pristine (no errors, warnings)
 - [ ] Tests use real code (mocks only if unavoidable)
 - [ ] Edge cases and errors covered
-- [ ] Every test I added names the production change that would make it fail
-- [ ] No `SCAFFOLD:` markers remain (`rg 'SCAFFOLD:'` is empty)
+- [ ] Every test I added names a production change that would make it fail — reachable without reverting my own edit
+- [ ] No `SCAFFOLD:` marker remains in a test file (`rg -n '^[[:space:]]*(//|/\*|\*|#|--)[[:space:]]*SCAFFOLD:' -g '!*.md'` finds nothing)
 
 Can't check all boxes? You skipped TDD. Start over.
 

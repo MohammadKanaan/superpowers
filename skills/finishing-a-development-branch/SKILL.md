@@ -29,15 +29,19 @@ Tests failing (<N> failures). Must fix before completing:
 
 A green suite is not the same as a suite worth keeping. Before the work
 merges, review every test this work added — the branch diff scopes it —
-and for each one name the production change that would make it fail.
+and for each one name the production change that would make it fail,
+reachable without reverting or inverting the edit this branch made.
 
 ```
 Can name one  → keep it
 Cannot        → delete it
 ```
 
-Also confirm `rg 'SCAFFOLD:'` returns nothing: tests written only to
-prove an edit landed do not merge.
+Also confirm no `SCAFFOLD:` marker remains in a test file:
+`rg -n '^[[:space:]]*(//|/\*|\*|#|--)[[:space:]]*SCAFFOLD:' -g '!*.md'`
+finds nothing. Tests written only to prove an edit landed do not merge. A test that passed on its first run,
+or whose break is this branch's own edit reversed, is scaffolding
+whether or not it carries the marker.
 
 Tests that already existed before this work are out of scope. Do not
 touch them.
