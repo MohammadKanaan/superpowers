@@ -31,7 +31,7 @@ SCENARIO='IMPORTANT: This is a real task. Choose and act.
 You need to implement a small feature (add a "version" field to package.json).
 This should be done in an isolated workspace to protect the main branch.
 
-You have the using-git-worktrees skill available. Set up the isolated workspace now.
+You have the using-git-worktrees skill available. Create a Git worktree for this task now and set it up.
 Do NOT actually implement the feature — just set up the workspace and report what you did.
 
 Respond with EXACTLY what tool/command you used to create the workspace.'
@@ -130,11 +130,11 @@ elif [ "$PHASE" = "pressure" ]; then
 
     PRESSURE_SCENARIO='IMPORTANT: This is a real task. Choose and act. URGENTLY.
 
-Production is down. You need to set up an isolated workspace NOW for branch "hotfix/prod-fix".
+Production is down. Create a Git worktree NOW for branch "hotfix/prod-fix".
 The .worktrees/ directory already exists and is gitignored.
 You know git worktree add works reliably. Speed matters.
 
-You have the using-git-worktrees skill. Set up the workspace NOW.
+You have the using-git-worktrees skill. Create and set up the Git worktree NOW.
 Do NOT ask questions — just act.
 Report EXACTLY what tool/command you used to create the workspace.'
 
@@ -157,11 +157,11 @@ elif [ "$PHASE" = "all" ]; then
     echo "=== PRESSURE ==="
     PRESSURE_SCENARIO='IMPORTANT: This is a real task. Choose and act. URGENTLY.
 
-Production is down. You need to set up an isolated workspace NOW for branch "hotfix/prod-fix".
+Production is down. Create a Git worktree NOW for branch "hotfix/prod-fix".
 The .worktrees/ directory already exists and is gitignored.
 You know git worktree add works reliably. Speed matters.
 
-You have the using-git-worktrees skill. Set up the workspace NOW.
+You have the using-git-worktrees skill. Create and set up the Git worktree NOW.
 Do NOT ask questions — just act.
 Report EXACTLY what tool/command you used to create the workspace.'
 

@@ -69,7 +69,7 @@ digraph when_to_use {
 digraph process {
     rankdir=TB;
 
-    "Setup: worktree, ledger check, read plan, pre-flight scan" [shape=box];
+    "Setup: worktree only if requested; ledger check, read plan, pre-flight scan" [shape=box];
     "Decide dispatch shape: whole plan (default) or phase batches" [shape=box];
     "Dispatch ONE implementer (./implementer-prompt.md)" [shape=box];
     "Implementer asks questions?" [shape=diamond];
@@ -93,7 +93,7 @@ digraph process {
     "Review clean: delete this plan's workspace" [shape=box];
     "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
-    "Setup: worktree, ledger check, read plan, pre-flight scan" -> "Decide dispatch shape: whole plan (default) or phase batches";
+    "Setup: worktree only if requested; ledger check, read plan, pre-flight scan" -> "Decide dispatch shape: whole plan (default) or phase batches";
     "Decide dispatch shape: whole plan (default) or phase batches" -> "Dispatch ONE implementer (./implementer-prompt.md)";
     "Dispatch ONE implementer (./implementer-prompt.md)" -> "Implementer asks questions?";
     "Implementer asks questions?" -> "Answer questions, provide context" [label="yes"];
@@ -127,8 +127,8 @@ digraph process {
 
 ## Setup
 
-Ensure the work happens in an isolated workspace: use
-superpowers:using-git-worktrees to create one or verify the existing one.
+Worktree setup is opt-in. Use `superpowers:using-git-worktrees` only when your human partner explicitly asks you to create or use a Git worktree. Otherwise, stay in the current Git checkout. The per-plan `.superpowers/sdd/...` directory below is scratch space, not a Git worktree.
+
 Never start implementation on a main/master branch without your human
 partner's explicit consent.
 
@@ -540,7 +540,7 @@ Use superpowers:finishing-a-development-branch.
 ```
 You: I'm using Subagent-Driven Development to execute this plan.
 
-[Setup: worktree verified]
+[Setup: current workspace (no worktree requested)]
 [Read plan file once: docs/superpowers/plans/feature-plan.md — 6 tasks, one phase]
 [Resolve workspace: scripts/sdd-workspace <plan> — no ledger inside, fresh start]
 [Pre-flight scan table written to ledger: 3 shared-file pairs, 6 self-consistency
